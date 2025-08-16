@@ -104,4 +104,9 @@ app.get('*', (req, res, next) => {
   const allowed = [
     'index.html','login.html','registro.html','panel.html',
     'grupos.html','comparador.html','crea
+   }
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});
+
 
