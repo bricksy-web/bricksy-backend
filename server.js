@@ -105,8 +105,10 @@ app.get('*', (req, res, next) => {
     'index.html','login.html','registro.html','panel.html',
     'grupos.html','comparador.html','crea
    }
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
+app.get('/health', (_req, res) => res.send('ok'));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Bricksy API escuchando en puerto ${PORT}`);
 });
+
 
 
