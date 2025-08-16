@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Crear grupo</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main>
+  <h1>Crear grupo</h1>
+
+  <form id="crear-grupo-form" novalidate>
+    <label for="titulo">Título del grupo</label>
+    <input id="titulo" name="titulo" placeholder="Ej.: Compra conjunta en Barrio Salamanca" required>
+
+    <label for="descripcion">Descripción</label>
+    <textarea id="descripcion" name="descripcion" rows="4" placeholder="Idea de inversión, tipo de inmueble, condiciones…"></textarea>
+
+    <label for="zona">Zona deseada</label>
+    <input id="zona" name="zona" placeholder="Ciudad / barrio / provincia">
+
+    <label for="objetivo">Objetivo</label>
+    <select id="objetivo" name="objetivo">
+      <option value="">(opcional)</option>
+      <option value="vivir">Vivir</option>
+      <option value="invertir">Invertir</option>
+      <option value="compartir">Compartir</option>
+      <option value="alquilar">Alquilar</option>
+      <option value="vender">Vender</option>
+    </select>
+
+    <label for="tipo">Tipo de inmueble</label>
+    <input id="tipo" name="tipo" placeholder="Piso, unifamiliar, local…">
+
+    <label for="inversion_total">Inversión total estimada (€)</label>
+    <input id="inversion_total" name="inversion_total" type="number" inputmode="decimal" min="0" step="1000" placeholder="Ej.: 250000" required>
+
+    <label for="aporte_minimo">Aportación mínima estimada por miembro (€)</label>
+    <input id="aporte_minimo" name="aporte_minimo" type="number" inputmode="decimal" min="0" step="1000" placeholder="Ej.: 25000">
+
+    <label for="limite_miembros">Límite de miembros</label>
+    <input id="limite_miembros" name="limite_miembros" type="number" min="2" step="1" placeholder="Ej.: 6">
+
+    <label for="fecha_objetivo">Fecha objetivo de compra</label>
+    <input id="fecha_objetivo" name="fecha_objetivo" type="month">
+
+    <label for="portada">Foto de portada (opcional)</label>
+    <input id="portada" type="file" accept="image/*">
+    <img id="portada-preview" class="preview" alt="Vista previa de portada">
+
+    <button type="submit" class="btn btn-primary btn-pill mt-2">Crear grupo</button>
+  </form>
+</main>
+
+</body>
+</html>

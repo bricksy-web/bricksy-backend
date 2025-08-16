@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Grupo creado</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main>
+  <h1>¡Tu grupo ha sido creado!</h1>
+  <p>Comparte este identificador con tus colaboradores:</p>
+  <p><strong>ID:</strong>
+    <script>
+      (function(){ const p=new URLSearchParams(location.search); document.write(p.get('id')||'—'); })();
+    </script>
+  </p>
+  <p class="mt-2"><a class="btn btn-primary btn-pill" href="grupos.html">Ver grupos</a></p>
+  <p class="mt-1"><a href="panel.html">Ir a mi panel</a></p>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Operación completada</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main>
+  <h1>¡Hecho!</h1>
+  <p>Tu operación ha sido procesada correctamente.</p>
+  <p><a href="index.html" class="btn btn-primary btn-pill">Volver al inicio</a></p>
+</main>
+
+</body>
+</html>

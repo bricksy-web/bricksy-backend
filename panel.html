@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Panel</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main>
+  <h1>Mi cuenta</h1>
+  <div id="panel-datos">
+    <p><strong>Nombre:</strong> <span data-field="nombre">-</span></p>
+    <p><strong>Correo:</strong> <span data-field="email">-</span></p>
+    <p><strong>Nacimiento:</strong> <span data-field="nacimiento">-</span></p>
+  </div>
+
+  <h2 class="mt-2">Mis grupos</h2>
+  <div id="mis-grupos" class="mt-1"><!-- rellena JS --></div>
+
+  <p class="mt-2"><a href="crear_grupo.html" class="btn btn-primary btn-pill" data-require-auth>Crear un grupo</a></p>
+</main>
+
+</body>
+</html>

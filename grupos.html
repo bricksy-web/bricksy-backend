@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Grupos</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main>
+  <h1>Grupos</h1>
+
+  <form id="groups-filters" class="filters" novalidate>
+    <div class="grow">
+      <label for="f-zona">Zona</label>
+      <input id="f-zona" name="zona" placeholder="Madrid, Segovia...">
+    </div>
+    <div>
+      <label for="f-objetivo">Objetivo</label>
+      <select id="f-objetivo" name="objetivo">
+        <option value="">Todos</option>
+        <option value="vivir">Vivir</option>
+        <option value="invertir">Invertir</option>
+        <option value="compartir">Compartir</option>
+        <option value="alquilar">Alquilar</option>
+        <option value="vender">Vender</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-orden">Ordenar por</label>
+      <select id="f-orden" name="orden">
+        <option value="novedad">Novedad</option>
+        <option value="inversion_asc">Inversión ↑</option>
+        <option value="inversion_desc">Inversión ↓</option>
+        <option value="miembros_desc">Más miembros</option>
+      </select>
+    </div>
+    <div><button type="submit" class="btn btn-primary btn-pill">Aplicar</button></div>
+  </form>
+
+  <div id="groups-empty" class="muted" style="display:none;">No hay grupos que coincidan con los filtros.</div>
+  <div id="groups-list" class="cards-grid"><!-- tarjetas JS --></div>
+
+  <p class="mt-2"><a href="crear_grupo.html" class="btn btn-outline btn-pill" data-require-auth>Crear un grupo</a></p>
+</main>
+
+</body>
+</html>

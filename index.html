@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Inicio</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="#inicio">Inicio</a></li>
+      <li><a href="#como-funciona">¿Cómo funciona?</a></li>
+      <li><a href="#beneficios">Beneficios</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main id="inicio">
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>Multiplica tu capital,<br>domina el mercado</h1>
+      <p class="lead">Inversiones inmobiliarias compartidas desde aportes accesibles. Crea o únete a grupos con reglas claras.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary btn-pill" href="registro.html">Regístrate gratis</a>
+        <a class="btn btn-outline btn-pill" href="grupos.html">Conoce Bricksy</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona" class="section">
+    <h2>¿Cómo funciona?</h2>
+    <div class="steps">
+      <div class="step"><h3>1. Regístrate</h3><p>Crea tu cuenta en segundos.</p></div>
+      <div class="step"><h3>2. Crea o únete</h3><p>Define zona, inversión y aportes o encuentra tu grupo ideal.</p></div>
+      <div class="step"><h3>3. Decide</h3><p>Usa el comparador para invertir con criterio.</p></div>
+    </div>
+  </section>
+
+  <section id="beneficios" class="section">
+    <h2>Beneficios</h2>
+    <ul class="benefits">
+      <li>Acceso a operaciones mayores compartiendo riesgo.</li>
+      <li>Transparencia en aportes, objetivos y plazos.</li>
+      <li>Comparador para decisiones objetivas.</li>
+    </ul>
+  </section>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bricksy — Iniciar sesión</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="index.html"><img src="logo.png" alt="Bricksy logo"></a>
+  <nav>
+    <ul id="nav-links">
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="comparador.html">Comparador</a></li>
+      <li><a href="grupos.html">Grupos</a></li>
+      <div class="nav-ctas logged-out">
+        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
+      </div>
+      <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
+      <li class="avatar-slot logged-in" style="display:none;"></li>
+    </ul>
+  </nav>
+  <button id="nav-toggle" aria-label="Abrir menú">☰</button>
+</header>
+
+<main>
+  <h1>Inicia sesión</h1>
+  <form id="login-form" novalidate>
+    <label for="login-email">Correo</label>
+    <input id="login-email" name="email" type="email" placeholder="tucorreo@ejemplo.com" required>
+    <label for="login-password">Contraseña</label>
+    <div class="password-field">
+      <input type="password" id="login-password" name="password" placeholder="Tu contraseña" autocomplete="current-password" required minlength="8">
+      <button type="button" id="toggle-login-password" aria-label="Mostrar u ocultar contraseña">👁️</button>
+    </div>
+    <div id="login-error" style="display:none;margin-top:6px;"></div>
+    <button type="submit" class="btn btn-primary btn-pill mt-2">Entrar</button>
+  </form>
+  <p class="mt-1">¿No tienes cuenta? <a href="registro.html">Regístrate</a></p>
+</main>
+
+</body>
+</html>
