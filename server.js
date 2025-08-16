@@ -22,6 +22,27 @@ app.use(express.static(__dirname));
 
 // -------- DB ----------
 let db;
+const DB_PATH = path.join(__dirname, 'data.db');
+
+async function initDb() {
+  db = await open({
+    filename: DB_PATH,
+    driver: sqlite3.Database
+  });
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      residencia TEXT,
+      nacimiento TEXT,
+      password_hash TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+  `);
+}
+
 async function getUserSafeById(id) {
   return db.get('SELECT id, nombre, email, residencia, nacimiento FROM users WHERE id = ?', id);
 }
@@ -102,13 +123,36 @@ app.get('/api/me', authRequired, async (req, res) => {
 app.get('*', (req, res, next) => {
   const file = req.path.replace(/^\//, '');
   const allowed = [
-    'index.html','login.html','registro.html','panel.html',
-    'grupos.html','comparador.html','crea
-   }
-app.get('/health', (_req, res) => res.send('ok'));
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Bricksy API escuchando en puerto ${PORT}`);
+    'index.html',
+    'login.html',
+    'registro.html',
+    'panel.html',
+    'grupos.html',
+    'comparador.html',
+    'crear_grupo.html',
+    'grupo_creado.html',
+    'success.html',
+    'welcome_email.html'
+  ];
+
+  if (allowed.includes(file)) {
+    return res.sendFile(path.join(__dirname, file));
+  }
+  return next();
 });
+
+app.get('/health', (_req, res) => res.send('ok'));
+
+initDb()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Bricksy API escuchando en puerto ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('DB_INIT_ERROR', err);
+    process.exit(1);
+  });
 
 
 
