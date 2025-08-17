@@ -28,8 +28,8 @@ async function api(path, { method='GET', data=null, auth=true } = {}) {
     body: data ? JSON.stringify(data) : null
   });
   const out = await res.json().catch(() => ({}));
-  if (!res.ok) throw out; // el backend devuelve { success:false, error:'...' }
-  return out;             // { success:true, token, user } o similar
+  if (!res.ok) throw out;
+  return out;
 }
 
 // atajos
@@ -76,11 +76,10 @@ function renderAuthUI(){
       document.addEventListener('click',(e)=>{ if(!wrap.contains(e.target)) menu.style.display='none'; });
       const logoutBtn = menu.querySelector('#logout-btn');
       logoutBtn.addEventListener('click', ()=>{
-      clearToken(); clearAuth(); window.location.href='index.html';
+        clearToken(); clearAuth(); window.location.href='index.html';
       });
-    logoutBtn.addEventListener('mouseenter', ()=>{ logoutBtn.style.background = '#0c3f27'; });
-    logoutBtn.addEventListener('mouseleave', ()=>{ logoutBtn.style.background = '#0f5132'; });
-
+      logoutBtn.addEventListener('mouseenter', ()=>{ logoutBtn.style.background = '#0c3f27'; });
+      logoutBtn.addEventListener('mouseleave', ()=>{ logoutBtn.style.background = '#0f5132'; });
     }
   } else {
     loggedInEls.forEach(el => el && (el.style.display='none'));
@@ -95,37 +94,6 @@ function renderAuthUI(){
       const nav = document.querySelector('header nav');
       if(nav) nav.classList.toggle('show');
     });
-  }
-}
-
-/* =========================
-   Home: mostrar grupos si hay sesión
-========================= */
-function toggleHomeForLogged(){
-  const auth = getAuth();
-  const path = location.pathname;
-  const isHome =
-    path === '/' ||
-    /(^|\/)index\.html?$/i.test(path) ||
-    (path === '' && location.href.endsWith('/'));
-
-  if(!isHome) return;
-
-  const hero = document.querySelector('.hero');
-  const como = document.getElementById('como-funciona');
-  const beneficios = document.getElementById('beneficios');
-  const homeGroups = document.getElementById('home-groups');
-
-  if(auth){
-    if(hero) hero.style.display='none';
-    if(como) como.style.display='none';
-    if(beneficios) beneficios.style.display='none';
-    if(homeGroups) homeGroups.style.display='block';
-  } else {
-    if(hero) hero.style.display='block';
-    if(como) como.style.display='block';
-    if(beneficios) beneficios.style.display='block';
-    if(homeGroups) homeGroups.style.display='none';
   }
 }
 
@@ -476,7 +444,6 @@ function sendWelcomeEmail({nombre,email}){
 ========================= */
 document.addEventListener('DOMContentLoaded', ()=>{
   renderAuthUI();
-  toggleHomeForLogged();
   guardPrivatePages();
   guardCTAs();
 
