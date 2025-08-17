@@ -1,9 +1,9 @@
 /* =========================
-   Storage helpers
+   Config & Auth (API + JWT)
 ========================= */
-// === Auth mediante API + JWT ===
 const API_BASE = 'https://bricksy-backend.onrender.com';
 
+// --- almacenamiento local coherente ---
 function setToken(t){ localStorage.setItem('bricksy_token', t); }
 function getToken(){ return localStorage.getItem('bricksy_token'); }
 function clearToken(){ localStorage.removeItem('bricksy_token'); }
@@ -12,35 +12,30 @@ function setAuth(user){ localStorage.setItem('bricksy_auth', JSON.stringify(user
 function getAuth(){ try { return JSON.parse(localStorage.getItem('bricksy_auth')||'null'); } catch(e){ return null; } }
 function clearAuth(){ localStorage.removeItem('bricksy_auth'); }
 
-async function api(path, opts={}){
-  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
-  const token = getToken();
-  if(token) headers['Authorization'] = 'Bearer '+token;
-  const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
-  const data = await res.json().catch(()=>({}));
-  if(!res.ok) throw { status: res.status, data };
-  return data;
+// guardar ambos de una vez tras login/registro
+function saveAuth({ token, user }){ setToken(token); setAuth(user); }
+
+// --- cliente API simple (JSON) ---
+async function api(path, { method='GET', data=null, auth=true } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth) {
+    const t = getToken();
+    if (t) headers['Authorization'] = `Bearer ${t}`;
+  }
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : null
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw out; // el backend devuelve { success:false, error:'...' }
+  return out;             // { success:true, token, user } o similar
 }
 
-async function apiRegister(payload){
-  return api('/api/register', { method:'POST', body: JSON.stringify(payload) });
-}
-async function apiLogin(payload){
-  return api('/api/login', { method:'POST', body: JSON.stringify(payload) });
-}
-async function apiMe(){
-  return api('/api/me', { method:'GET' });
-}
-
-
-function loadGroups(){ try { return JSON.parse(localStorage.getItem('bricksy_groups')||'[]'); } catch(e){ return []; } }
-function saveGroups(groups){ localStorage.setItem('bricksy_groups', JSON.stringify(groups)); }
-function nextGroupId(){
-  const groups = loadGroups();
-  const maxId = groups.reduce((m,g)=>Math.max(m, g.id||0), 0);
-  return maxId + 1;
-}
-
+// atajos
+const apiRegister = (payload)=> api('/api/register', { method:'POST', data: payload, auth:false });
+const apiLogin    = (payload)=> api('/api/login',    { method:'POST', data: payload, auth:false });
+const apiMe       = ()=> api('/api/me', { method:'GET', auth:true });
 
 /* =========================
    UI: Header según sesión
@@ -54,6 +49,7 @@ function renderAuthUI(){
   if(auth){
     loggedInEls.forEach(el => el && (el.style.display='inline-block'));
     loggedOutEls.forEach(el => el && (el.style.display='none'));
+
     if(slot){
       slot.innerHTML='';
       const wrap=document.createElement('div'); wrap.style.position='relative';
@@ -74,8 +70,9 @@ function renderAuthUI(){
       wrap.appendChild(btn); wrap.appendChild(menu); slot.appendChild(wrap);
       btn.addEventListener('click',()=>{ menu.style.display = (menu.style.display==='block'?'none':'block'); });
       document.addEventListener('click',(e)=>{ if(!wrap.contains(e.target)) menu.style.display='none'; });
-      menu.querySelector('#logout-btn').addEventListener('click',()=>{ clearToken(); clearAuth(); window.location.href='index.html'; });
-
+      menu.querySelector('#logout-btn').addEventListener('click',()=>{
+        clearToken(); clearAuth(); window.location.href='index.html';
+      });
     }
   } else {
     loggedInEls.forEach(el => el && (el.style.display='none'));
@@ -128,7 +125,6 @@ function maskDateInput(input){
     input.value = v;
   });
 }
-
 function readFileAsDataURL(file){
   return new Promise((res,rej)=>{
     const fr = new FileReader();
@@ -137,14 +133,13 @@ function readFileAsDataURL(file){
     fr.readAsDataURL(file);
   });
 }
-
 function formatMoney(n){
   if(n===null || n===undefined || isNaN(n)) return '-';
   return Number(n).toLocaleString('es-ES',{ style:'currency', currency:'EUR', maximumFractionDigits:0 });
 }
 
 /* =========================
-   Registro
+   Registro (form id="registro-form")
 ========================= */
 function handleRegisterPage(){
   const form = document.getElementById('registro-form');
@@ -161,38 +156,44 @@ function handleRegisterPage(){
     return dt.getFullYear()===y && (dt.getMonth()+1)===m && dt.getDate()===d;
   }
 
-form.addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const nombre=(form.nombre?.value||'').trim();
-  const email=(form.email?.value||'').trim().toLowerCase();
-  const residencia=(form.residencia?.value||'').trim();
-  const nac=(form.nacimiento?.value||'').trim();
-  const pass=(form.password?.value||'');
-  const pass2=(form['confirm-password']?.value||'');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const nombre=(form.nombre?.value||'').trim();
+    const apellidos=(form.apellidos?.value||'').trim();
+    const email=(form.email?.value||'').trim().toLowerCase();
+    const residencia=(form.residencia?.value||'').trim();
+    const nac=(form.nacimiento?.value||'').trim(); // dd/mm/yyyy
+    const telefono=(form.telefono?.value||'').trim();
+    const pass=(form.password?.value||'');
+    const pass2=(form['confirm-password']?.value||'');
 
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Correo no válido.'); return; }
-  if(pass.length<8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
-  if(pass!==pass2){ alert('Las contraseñas no coinciden.'); return; }
-  if(!validDateDDMMYYYY(nac)){ nacimientoErr && (nacimientoErr.style.display='block'); return; }
-  nacimientoErr && (nacimientoErr.style.display='none');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Correo no válido.'); return; }
+    if(pass.length<8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
+    if(pass!==pass2){ alert('Las contraseñas no coinciden.'); return; }
+    if(nac && !validDateDDMMYYYY(nac)){ nacimientoErr && (nacimientoErr.style.display='block'); return; }
+    nacimientoErr && (nacimientoErr.style.display='none');
 
-  try{
-    const { token, user } = await apiRegister({ nombre, email, residencia, nacimiento:nac, password:pass });
-    setToken(token);
-    setAuth(user);
-    try{ sendWelcomeEmail?.({nombre,email}); }catch(_){}
-    window.location.href='panel.html';
+    try{
+      // el backend espera "fecha_nacimiento"
+      const { token, user } = await apiRegister({
+        nombre, apellidos, email, residencia,
+        fecha_nacimiento: nac || null,
+        telefono: telefono || null,
+        password: pass
+      });
+      saveAuth({ token, user });
+      try{ sendWelcomeEmail?.({nombre,email}); }catch(_){}
+      window.location.href='panel.html';
     }catch(err){
-      const code = err?.data?.error;
-      if(code==='EMAIL_EXISTS'){ alert('Ya existe una cuenta con ese correo.'); return; }
-      alert('Error al registrar. Inténtalo de nuevo. Código: ' + (code||err?.status||'DESCONOCIDO'));
+      const code = err?.error;
+      if(code==='EMAIL_YA_REGISTRADO'){ alert('Ya existe una cuenta con ese correo.'); return; }
+      alert('Error al registrar. Código: ' + (code||'DESCONOCIDO'));
     }
-});
-
+  });
 }
 
 /* =========================
-   Login
+   Login (form id="login-form")
 ========================= */
 function handleLoginPage(){
   const form = document.getElementById('login-form');
@@ -209,35 +210,40 @@ function handleLoginPage(){
     });
   }
 
-form.addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const email=(form.email?.value||'').trim().toLowerCase();
-  const password=(form.password?.value||'');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email=(form.email?.value||'').trim().toLowerCase();
+    const password=(form.password?.value||'');
 
-  try{
-    const { token, user } = await apiLogin({ email, password });
-    setToken(token);
-    setAuth(user);
-    if(err) err.style.display='none';
-    window.location.href='panel.html';
-  }catch(ex){
-    if(err){
-      err.style.display='block';
-      if(ex?.data?.error==='NO_USER') err.textContent='No existe una cuenta con ese correo.';
-      else if(ex?.data?.error==='BAD_PASSWORD') err.textContent='Contraseña incorrecta.';
-      else err.textContent='No se pudo iniciar sesión.';
-    }else{
-      alert('Error al iniciar sesión.');
+    try{
+      const { token, user } = await apiLogin({ email, password });
+      saveAuth({ token, user });
+      if(err) err.style.display='none';
+      window.location.href = 'panel.html';
+    }catch(ex){
+      if(err){
+        err.style.display='block';
+        if(ex?.error==='USUARIO_NO_ENCONTRADO') err.textContent='No existe una cuenta con ese correo.';
+        else if(ex?.error==='PASSWORD_INCORRECTA') err.textContent='Contraseña incorrecta.';
+        else err.textContent='No se pudo iniciar sesión.';
+      }else{
+        alert('Error al iniciar sesión.');
+      }
     }
-  }
-});
-
-
+  });
 }
 
 /* =========================
-   Crear grupo
+   Crear grupo (localStorage)
 ========================= */
+function loadGroups(){ try { return JSON.parse(localStorage.getItem('bricksy_groups')||'[]'); } catch(e){ return []; } }
+function saveGroups(groups){ localStorage.setItem('bricksy_groups', JSON.stringify(groups)); }
+function nextGroupId(){
+  const groups = loadGroups();
+  const maxId = groups.reduce((m,g)=>Math.max(m, g.id||0), 0);
+  return maxId + 1;
+}
+
 function handleCreateGroupPage(){
   const form = document.getElementById('crear-grupo-form');
   if(!form) return;
@@ -264,7 +270,7 @@ function handleCreateGroupPage(){
     const titulo=(form.titulo?.value||'').trim();
     const descripcion=(form.descripcion?.value||'').trim();
     const zona=(form.zona?.value||'').trim();
-    const objetivo=(form.objetivo?.value||'').trim(); // vivir, invertir, compartir, alquilar, vender (opcional en specs)
+    const objetivo=(form.objetivo?.value||'').trim(); // vivir, invertir, compartir, alquilar, vender (opcional)
     const tipo=(form.tipo?.value||'').trim(); // piso, casa, local...
     const inversionTotal=Number((form.inversion_total?.value||'').toString().replace(/[^\d.]/g,''))||0;
     const aporteMinimo=Number((form.aporte_minimo?.value||'').toString().replace(/[^\d.]/g,''))||0;
@@ -323,10 +329,8 @@ function renderGroupCard(g){
     </article>
   `;
 }
-
 function applyGroupFilters(groups, f){
   let arr = groups.slice();
-
   if(f.zona){
     const z = f.zona.trim().toLowerCase();
     arr = arr.filter(g => (g.zona||'').toLowerCase().includes(z));
@@ -347,7 +351,6 @@ function applyGroupFilters(groups, f){
   }
   return arr;
 }
-
 function handleGroupsPage(){
   const list = document.getElementById('groups-list');
   const empty = document.getElementById('groups-empty');
@@ -369,8 +372,7 @@ function handleGroupsPage(){
     } else {
       empty.style.display='none';
       list.innerHTML = arr.map(renderGroupCard).join('');
-      // volver a enlazar data-require-auth
-      guardCTAs();
+      guardCTAs(); // re-enlazar
     }
   }
 
@@ -380,7 +382,7 @@ function handleGroupsPage(){
 }
 
 /* =========================
-   Panel: mis grupos
+   Panel: mis datos y grupos
 ========================= */
 function handlePanelPage(){
   const panel = document.getElementById('panel-datos');
@@ -388,7 +390,7 @@ function handlePanelPage(){
     const auth=getAuth(); if(!auth) return;
     panel.querySelector('[data-field="nombre"]')?.replaceChildren(document.createTextNode(auth.nombre||'-'));
     panel.querySelector('[data-field="email"]')?.replaceChildren(document.createTextNode(auth.email||'-'));
-    panel.querySelector('[data-field="nacimiento"]')?.replaceChildren(document.createTextNode(auth.nacimiento||'-'));
+    panel.querySelector('[data-field="nacimiento"]')?.replaceChildren(document.createTextNode(auth.fecha_nacimiento || auth.nacimiento || '-'));
   }
 
   const mine = document.getElementById('mis-grupos');
@@ -443,3 +445,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
   handleGroupsPage();
   handlePanelPage();
 });
+
