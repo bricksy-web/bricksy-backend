@@ -10,8 +10,11 @@ import path from 'node:path';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS
-const corsOrigin = process.env.CORS_ORIGIN || '*';
+// CORS (acepta lista separada por comas)
+const corsOriginRaw = process.env.CORS_ORIGIN || '*';
+const corsOrigin = corsOriginRaw.includes(',')
+  ? corsOriginRaw.split(',').map(s => s.trim())
+  : corsOriginRaw;
 app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
