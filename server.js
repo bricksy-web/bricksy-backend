@@ -6,10 +6,16 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'url'; // (necesario para __dirname en ES Modules)
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'cambia-esta-clave';
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Resolver __dirname en ES Modules y servir archivos estáticos (HTML, CSS, JS)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(__dirname));
 
 // CORS (acepta lista separada por comas)
 const corsOriginRaw = process.env.CORS_ORIGIN || '*';
@@ -187,9 +193,9 @@ app.get('/api/admin/users', async (req, res) => {
       return res.status(401).json({ error: 'No autorizado' });
     }
 
-    // Consulta sencilla y compatible (id, name, email)
+    // Usamos 'nombre' de la tabla y lo exponemos como 'name' + fecha
     const users = await db.all(
-      'SELECT id, name, email FROM users ORDER BY id DESC'
+      "SELECT id, nombre AS name, email, created_at FROM users ORDER BY id DESC"
     );
 
     res.json({ users });
@@ -202,4 +208,5 @@ app.get('/api/admin/users', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Bricksy backend listening on port ${PORT}`);
 });
+
 
