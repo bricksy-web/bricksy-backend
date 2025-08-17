@@ -22,7 +22,9 @@ app.use(express.static(__dirname));
 
 // -------- DB ----------
 let db;
-const DB_PATH = path.join(__dirname, 'data.db');
+const DB_PATH = process.env.DB_PATH || path.join('/tmp', 'bricksy.db');
+console.log('[DB] Usando archivo SQLite en:', DB_PATH);
+
 
 async function initDb() {
   db = await open({
