@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+const ADMIN_KEY = process.env.ADMIN_KEY || 'cambia-esta-clave';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -176,6 +177,26 @@ app.get('/api/me', auth, async (req, res) => {
   const user = await db.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
   if (!user) return res.status(404).json({ success: false, error: 'USUARIO_NO_ENCONTRADO' });
   res.json({ success: true, user: normalizeUser(user) });
+});
+
+// --- Admin: listar usuarios (requiere cabecera x-admin-key) ---
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const key = req.header('x-admin-key');
+    if (!key || key !== ADMIN_KEY) {
+      return res.status(401).json({ error: 'No autorizado' });
+    }
+
+    // Consulta sencilla y compatible (id, name, email)
+    const users = await db.all(
+      'SELECT id, name, email FROM users ORDER BY id DESC'
+    );
+
+    res.json({ users });
+  } catch (err) {
+    console.error('Error /api/admin/users:', err);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
 });
 
 app.listen(PORT, () => {

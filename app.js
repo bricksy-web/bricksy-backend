@@ -142,7 +142,10 @@ function formatMoney(n){
    Registro (form id="registro-form")
 ========================= */
 function handleRegisterPage(){
-  const form = document.getElementById('registro-form');
+  const form =
+    document.getElementById('registro-form') ||
+    document.getElementById('registroForm') ||
+    document.querySelector('form[data-role="registro"]');
   if(!form) return;
 
   const nacimiento = document.getElementById('nacimiento');
@@ -158,14 +161,14 @@ function handleRegisterPage(){
 
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const nombre=(form.nombre?.value||'').trim();
-    const apellidos=(form.apellidos?.value||'').trim();
-    const email=(form.email?.value||'').trim().toLowerCase();
-    const residencia=(form.residencia?.value||'').trim();
-    const nac=(form.nacimiento?.value||'').trim(); // dd/mm/yyyy
-    const telefono=(form.telefono?.value||'').trim();
-    const pass=(form.password?.value||'');
-    const pass2=(form['confirm-password']?.value||'');
+  const nombre    = (document.getElementById('reg-nombre')?.value     || form.nombre?.value || '').trim();
+  const apellidos = (document.getElementById('reg-apellidos')?.value  || form.apellidos?.value || '').trim();
+  const email     = (document.getElementById('reg-email')?.value      || form.email?.value || '').trim().toLowerCase();
+  const residencia= (document.getElementById('reg-residencia')?.value || form.residencia?.value || '').trim();
+  const nac       = (document.getElementById('nacimiento')?.value     || form.nacimiento?.value || '').trim();
+  const telefono  = (document.getElementById('reg-telefono')?.value   || form.telefono?.value || '').trim();
+  const pass      = (document.getElementById('reg-password')?.value   || form.password?.value || '');
+  const pass2     = (document.getElementById('confirm-password')?.value || form['confirm-password']?.value || '');
 
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Correo no válido.'); return; }
     if(pass.length<8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }

@@ -30,27 +30,31 @@
 
 <main>
   <h1>Crear cuenta</h1>
-  <form id="registroForm">
+ <form id="registro-form" data-role="registro" novalidate>
   <label>Nombre</label>
-  <input id="reg-nombre" type="text" required>
+  <input id="reg-nombre" name="nombre" type="text" required>
 
   <label>Apellidos</label>
-  <input id="reg-apellidos" type="text">
+  <input id="reg-apellidos" name="apellidos" type="text">
 
   <label>Residencia</label>
-  <input id="reg-residencia" type="text">
+  <input id="reg-residencia" name="residencia" type="text">
 
-  <label>Fecha de nacimiento</label>
-  <input id="reg-fecha" type="date">
+  <label>Fecha de nacimiento (dd/mm/aaaa)</label>
+  <input id="nacimiento" name="nacimiento" type="text" placeholder="dd/mm/aaaa">
+  <small id="nacimiento-error" style="display:none;color:#c00;">Fecha inválida</small>
 
   <label>Teléfono</label>
-  <input id="reg-telefono" type="tel">
+  <input id="reg-telefono" name="telefono" type="tel">
 
   <label>Email</label>
-  <input id="reg-email" type="email" required>
+  <input id="reg-email" name="email" type="email" required>
 
-  <label>Contraseña (mín. 6)</label>
-  <input id="reg-password" type="password" required minlength="6">
+  <label>Contraseña (mín. 8)</label>
+  <input id="reg-password" name="password" type="password" required minlength="8">
+
+  <label>Repite la contraseña</label>
+  <input id="confirm-password" name="confirm-password" type="password" required minlength="8">
 
   <button type="submit">Registrarme</button>
 </form>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bricksy — Admin Usuarios</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; }
+    h1 { margin-bottom: 16px; }
+    .card { max-width: 980px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
+    label { display:block; font-weight:600; margin-bottom:6px; }
+    input[type="password"]{ width: 100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; margin-bottom:12px; }
+    button { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; }
+    .primary { background:#0f5132; color:white; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; }
+    th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:14px; }
+    .muted { color:#6b7280; }
+    .error { color:#b91c1c; margin-top:10px; }
+    .ok { color:#065f46; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <h1>Administración — Usuarios</h1>
+  <div class="card">
+    <label for="key">Clave de administrador</label>
+    <input type="password" id="key" placeholder="Introduce tu ADMIN_KEY" />
+    <button class="primary" id="load">Ver usuarios</button>
+    <div id="msg" class="error"></div>
+
+    <table id="tbl" style="display:none;">
+      <thead>
+        <tr>
+          <th style="width:80px">ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th class="muted">Creado</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Si backend y frontend están en el MISMO dominio, déjalo vacío:
+    const API_BASE = '';
+
+    // Si los tienes separados (ej. frontend en Netlify y backend en Render),
+    // CAMBIA SOLO ESTA LÍNEA por tu backend, por ejemplo:
+    // const API_BASE = 'https://tu-backend.onrender.com';
+
+    const loadBtn = document.getElementById('load');
+    const keyInput = document.getElementById('key');
+    const msg = document.getElementById('msg');
+    const tbl = document.getElementById('tbl');
+    const tbody = document.getElementById('tbody');
+
+    function celda(texto, extraClass='') {
+      const td = document.createElement('td');
+      td.textContent = texto ?? '';
+      if (extraClass) td.className = extraClass;
+      return td;
+    }
+
+    loadBtn.addEventListener('click', async () => {
+      msg.textContent = '';
+      msg.className = 'error';
+      tbl.style.display = 'none';
+      tbody.innerHTML = '';
+
+      const key = keyInput.value.trim();
+      if (!key) {
+        msg.textContent = 'Introduce la clave de administrador.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/users`, {
+          headers: { 'x-admin-key': key }
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            msg.textContent = 'No autorizado: la clave no coincide.';
+          } else {
+            msg.textContent = 'Error al cargar usuarios (' + res.status + ').';
+          }
+          return;
+        }
+
+        const data = await res.json();
+        const users = Array.isArray(data.users) ? data.users : [];
+
+        if (users.length === 0) {
+          msg.className = 'ok';
+          msg.textContent = 'No hay usuarios registrados todavía.';
+          return;
+        }
+
+        users.forEach(u => {
+          const tr = document.createElement('tr');
+          tr.appendChild(celda(u.id));
+          tr.appendChild(celda(u.name));
+          tr.appendChild(celda(u.email));
+          // Por si tu tabla tiene 'created_at' o 'createdAt' o no tiene nada:
+          const creado = u.created_at || u.createdAt || '';
+          tr.appendChild(celda(creado, 'muted'));
+          tbody.appendChild(tr);
+        });
+
+        tbl.style.display = 'table';
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+</body>
+</html>
