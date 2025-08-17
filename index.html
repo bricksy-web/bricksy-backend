@@ -20,7 +20,7 @@
       <li><a href="comparador.html">Comparador</a></li>
       <li><a href="grupos.html">Grupos</a></li>
       <div class="nav-ctas logged-out">
-        <a class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
+        <a id="nav-register" class="btn btn-outline btn-pill" href="registro.html">Regístrate</a>
         <a class="btn btn-primary btn-pill" href="login.html">Acceder</a>
       </div>
       <li class="logged-in" style="display:none;"><a href="panel.html">Panel</a></li>
@@ -31,17 +31,19 @@
 </header>
 
 <main id="inicio">
+  <!-- Héroe (se ocultará si el usuario está logueado) -->
   <section class="hero">
     <div class="hero-inner">
       <h1>Multiplica tu capital,<br>domina el mercado</h1>
       <p class="lead">Inversiones inmobiliarias compartidas desde aportes accesibles. Crea o únete a grupos con reglas claras.</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary btn-pill" href="registro.html">Regístrate gratis</a>
+        <a id="cta-register" class="btn btn-primary btn-pill" href="registro.html">Regístrate gratis</a>
         <a class="btn btn-outline btn-pill" href="grupos.html">Conoce Bricksy</a>
       </div>
     </div>
   </section>
 
+  <!-- Bloques de marketing (se ocultarán si el usuario está logueado) -->
   <section id="como-funciona" class="section">
     <h2>¿Cómo funciona?</h2>
     <div class="steps">
@@ -58,6 +60,44 @@
       <li>Transparencia en aportes, objetivos y plazos.</li>
       <li>Comparador para decisiones objetivas.</li>
     </ul>
+  </section>
+
+  <!-- Listado de grupos + filtros SOLO visible si el usuario está logueado -->
+  <section id="home-groups" class="section" style="display:none;">
+    <h2>Explora grupos</h2>
+
+    <form id="groups-filters" class="filters" novalidate>
+      <div class="grow">
+        <label for="f-zona">Zona</label>
+        <input id="f-zona" name="zona" placeholder="Madrid, Segovia...">
+      </div>
+      <div>
+        <label for="f-objetivo">Objetivo</label>
+        <select id="f-objetivo" name="objetivo">
+          <option value="">Todos</option>
+          <option value="vivir">Vivir</option>
+          <option value="invertir">Invertir</option>
+          <option value="compartir">Compartir</option>
+          <option value="alquilar">Alquilar</option>
+          <option value="vender">Vender</option>
+        </select>
+      </div>
+      <div>
+        <label for="f-orden">Ordenar por</label>
+        <select id="f-orden" name="orden">
+          <option value="novedad">Novedad</option>
+          <option value="inversion_asc">Inversión ↑</option>
+          <option value="inversion_desc">Inversión ↓</option>
+          <option value="miembros_desc">Más miembros</option>
+        </select>
+      </div>
+      <div><button type="submit" class="btn btn-primary btn-pill">Aplicar</button></div>
+    </form>
+
+    <div id="groups-empty" class="muted" style="display:none;">No hay grupos que coincidan con los filtros.</div>
+    <div id="groups-list" class="cards-grid"><!-- tarjetas JS --></div>
+
+    <p class="mt-2"><a href="crear_grupo.html" class="btn btn-outline btn-pill" data-require-auth>Crear un grupo</a></p>
   </section>
 </main>
 

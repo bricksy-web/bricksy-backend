@@ -50,6 +50,10 @@ function renderAuthUI(){
     loggedInEls.forEach(el => el && (el.style.display='inline-block'));
     loggedOutEls.forEach(el => el && (el.style.display='none'));
 
+    // Ocultar enlaces/botones de registro si hay sesión
+    document.getElementById('nav-register')?.remove();
+    document.getElementById('cta-register')?.remove();
+
     if(slot){
       slot.innerHTML='';
       const wrap=document.createElement('div'); wrap.style.position='relative';
@@ -87,6 +91,37 @@ function renderAuthUI(){
       const nav = document.querySelector('header nav');
       if(nav) nav.classList.toggle('show');
     });
+  }
+}
+
+/* =========================
+   Home: mostrar grupos si hay sesión
+========================= */
+function toggleHomeForLogged(){
+  const auth = getAuth();
+  const path = location.pathname;
+  const isHome =
+    path === '/' ||
+    /(^|\/)index\.html?$/i.test(path) ||
+    (path === '' && location.href.endsWith('/'));
+
+  if(!isHome) return;
+
+  const hero = document.querySelector('.hero');
+  const como = document.getElementById('como-funciona');
+  const beneficios = document.getElementById('beneficios');
+  const homeGroups = document.getElementById('home-groups');
+
+  if(auth){
+    if(hero) hero.style.display='none';
+    if(como) como.style.display='none';
+    if(beneficios) beneficios.style.display='none';
+    if(homeGroups) homeGroups.style.display='block';
+  } else {
+    if(hero) hero.style.display='block';
+    if(como) como.style.display='block';
+    if(beneficios) beneficios.style.display='block';
+    if(homeGroups) homeGroups.style.display='none';
   }
 }
 
@@ -161,14 +196,14 @@ function handleRegisterPage(){
 
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-  const nombre    = (document.getElementById('reg-nombre')?.value     || form.nombre?.value || '').trim();
-  const apellidos = (document.getElementById('reg-apellidos')?.value  || form.apellidos?.value || '').trim();
-  const email     = (document.getElementById('reg-email')?.value      || form.email?.value || '').trim().toLowerCase();
-  const residencia= (document.getElementById('reg-residencia')?.value || form.residencia?.value || '').trim();
-  const nac       = (document.getElementById('nacimiento')?.value     || form.nacimiento?.value || '').trim();
-  const telefono  = (document.getElementById('reg-telefono')?.value   || form.telefono?.value || '').trim();
-  const pass      = (document.getElementById('reg-password')?.value   || form.password?.value || '');
-  const pass2     = (document.getElementById('confirm-password')?.value || form['confirm-password']?.value || '');
+    const nombre    = (document.getElementById('reg-nombre')?.value     || form.nombre?.value || '').trim();
+    const apellidos = (document.getElementById('reg-apellidos')?.value  || form.apellidos?.value || '').trim();
+    const email     = (document.getElementById('reg-email')?.value      || form.email?.value || '').trim().toLowerCase();
+    const residencia= (document.getElementById('reg-residencia')?.value || form.residencia?.value || '').trim();
+    const nac       = (document.getElementById('nacimiento')?.value     || form.nacimiento?.value || '').trim();
+    const telefono  = (document.getElementById('reg-telefono')?.value   || form.telefono?.value || '').trim();
+    const pass      = (document.getElementById('reg-password')?.value   || form.password?.value || '');
+    const pass2     = (document.getElementById('confirm-password')?.value || form['confirm-password']?.value || '');
 
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Correo no válido.'); return; }
     if(pass.length<8){ alert('La contraseña debe tener al menos 8 caracteres.'); return; }
@@ -177,7 +212,6 @@ function handleRegisterPage(){
     nacimientoErr && (nacimientoErr.style.display='none');
 
     try{
-      // el backend espera "fecha_nacimiento"
       const { token, user } = await apiRegister({
         nombre, apellidos, email, residencia,
         fecha_nacimiento: nac || null,
@@ -203,7 +237,6 @@ function handleLoginPage(){
   if(!form) return;
   const err = document.getElementById('login-error');
 
-  // Mostrar/ocultar contraseña
   const pwd = document.getElementById('login-password');
   const toggle = document.getElementById('toggle-login-password');
   if(toggle && pwd){
@@ -273,8 +306,8 @@ function handleCreateGroupPage(){
     const titulo=(form.titulo?.value||'').trim();
     const descripcion=(form.descripcion?.value||'').trim();
     const zona=(form.zona?.value||'').trim();
-    const objetivo=(form.objetivo?.value||'').trim(); // vivir, invertir, compartir, alquilar, vender (opcional)
-    const tipo=(form.tipo?.value||'').trim(); // piso, casa, local...
+    const objetivo=(form.objetivo?.value||'').trim();
+    const tipo=(form.tipo?.value||'').trim();
     const inversionTotal=Number((form.inversion_total?.value||'').toString().replace(/[^\d.]/g,''))||0;
     const aporteMinimo=Number((form.aporte_minimo?.value||'').toString().replace(/[^\d.]/g,''))||0;
     const limiteMiembros=Number(form.limite_miembros?.value||0)||0;
@@ -296,7 +329,7 @@ function handleCreateGroupPage(){
       inversion_total: inversionTotal,
       aporte_minimo: aporteMinimo,
       limite_miembros: limiteMiembros || null,
-      miembros: [auth.email], // creador entra como primer miembro
+      miembros: [auth.email],
       fecha_objetivo: fechaObjetivo || null,
       portada: portada || null,
       createdBy: auth.email,
@@ -439,6 +472,7 @@ function sendWelcomeEmail({nombre,email}){
 ========================= */
 document.addEventListener('DOMContentLoaded', ()=>{
   renderAuthUI();
+  toggleHomeForLogged();
   guardPrivatePages();
   guardCTAs();
 
@@ -448,4 +482,3 @@ document.addEventListener('DOMContentLoaded', ()=>{
   handleGroupsPage();
   handlePanelPage();
 });
-
