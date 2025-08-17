@@ -69,14 +69,18 @@ function renderAuthUI(){
       menu.innerHTML = `
         <div style="padding:10px 8px;font-weight:600">¡Hola, ${auth.nombre||'usuario'}!</div>
         <a href="panel.html" style="display:block;padding:8px;border-radius:8px;text-decoration:none">Mi cuenta</a>
-        <button type="button" id="logout-btn" style="display:block;width:100%;padding:8px;margin-top:6px;border:none;border-radius:8px;background:#f5f5f5;cursor:pointer">Cerrar sesión</button>
+        <button type="button" id="logout-btn" style="display:block;width:100%;padding:10px 12px;margin-top:8px;border:none;border-radius:9999px;background:#0f5132;color:#fff;font-weight:600;cursor:pointer">Cerrar sesión</button>
       `;
       wrap.appendChild(btn); wrap.appendChild(menu); slot.appendChild(wrap);
       btn.addEventListener('click',()=>{ menu.style.display = (menu.style.display==='block'?'none':'block'); });
       document.addEventListener('click',(e)=>{ if(!wrap.contains(e.target)) menu.style.display='none'; });
-      menu.querySelector('#logout-btn').addEventListener('click',()=>{
-        clearToken(); clearAuth(); window.location.href='index.html';
+      const logoutBtn = menu.querySelector('#logout-btn');
+      logoutBtn.addEventListener('click', ()=>{
+      clearToken(); clearAuth(); window.location.href='index.html';
       });
+    logoutBtn.addEventListener('mouseenter', ()=>{ logoutBtn.style.background = '#0c3f27'; });
+    logoutBtn.addEventListener('mouseleave', ()=>{ logoutBtn.style.background = '#0f5132'; });
+
     }
   } else {
     loggedInEls.forEach(el => el && (el.style.display='none'));
