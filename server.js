@@ -4,21 +4,48 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS (ajusta CORS_ORIGIN si tienes dominio del front)
+// CORS
 const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
-// --- DB SQLITE EN /tmp (Render es efímero: se borra al redeploy) ---
-const DB_PATH = process.env.DB_PATH || '/tmp/bricksy.sqlite3';
+// --- Rutas/ubicación de la BD ---
+// Puedes pasar DB_DIR=/tmp y DB_PATH=bricksy.sqlite3 en Render.
+// Si DB_PATH empieza por '/', se usa tal cual.
+// Si no, se une a DB_DIR (por defecto TMPDIR o /tmp).
+const DB_DIR   = process.env.DB_DIR || process.env.TMPDIR || '/tmp';
+const DB_FILE  = process.env.DB_PATH || 'bricksy.sqlite3';
+const DB_PATH  = DB_FILE.startsWith('/') ? DB_FILE : path.join(DB_DIR, DB_FILE);
+
 let db;
 
+async function openDbAt(filename) {
+  await fs.mkdir(path.dirname(filename), { recursive: true }).catch(() => {});
+  return open({ filename, driver: sqlite3.Database });
+}
+
 async function initDb() {
-  db = await open({ filename: DB_PATH, driver: sqlite3.Database });
+  console.log('[DB] Intentando abrir:', DB_PATH);
+  try {
+    db = await openDbAt(DB_PATH);
+  } catch (e1) {
+    console.error('[DB] Fallo en DB_PATH:', e1?.message);
+    const fallback = '/tmp/bricksy.sqlite3';
+    try {
+      console.warn('[DB] Reintentando en', fallback);
+      db = await openDbAt(fallback);
+    } catch (e2) {
+      console.error('[DB] Fallo también en /tmp. Usando :memory:', e2?.message);
+      db = await open({ filename: ':memory:', driver: sqlite3.Database });
+    }
+  }
+
   await db.exec('PRAGMA journal_mode = WAL;');
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -33,6 +60,7 @@ async function initDb() {
       created_at TEXT DEFAULT (datetime('now'))
     );
   `);
+  console.log('[DB] OK');
 }
 await initDb();
 
@@ -77,7 +105,7 @@ app.post('/api/register', async (req, res) => {
       nombre: b.nombre || b.name || '',
       apellidos: b.apellidos || b.surname || b.lastName || '',
       residencia: b.residencia || b.residence || '',
-      fecha_nacimiento: b.fecha_nacimiento || b.fechaNacimiento || b.birthdate || null,
+      fecha_nacimiento: b.fecha_nacimiento || b.fechaNacimiento || b.nacimiento || null,
       email,
       telefono: b.telefono || b.phone || null,
       password_hash
@@ -150,6 +178,4 @@ app.get('/api/me', auth, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Bricksy backend listening on port ${PORT}`);
 });
-
-
 
