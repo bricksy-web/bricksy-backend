@@ -4,157 +4,152 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
-
-const JWT_SECRET = process.env.JWT_SECRET || 'cambia-esto-por-uno-seguro';
-const PORT = process.env.PORT || 3000;
 
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+
+// CORS (ajusta CORS_ORIGIN si tienes dominio del front)
+const corsOrigin = process.env.CORS_ORIGIN || '*';
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
-// Servir el front desde el mismo proyecto
-app.use(express.static(__dirname));
-
-// -------- DB ----------
+// --- DB SQLITE EN /tmp (Render es efímero: se borra al redeploy) ---
+const DB_PATH = process.env.DB_PATH || '/tmp/bricksy.sqlite3';
 let db;
-const DB_PATH = process.env.DB_PATH || path.join('/tmp', 'bricksy.db');
-console.log('[DB] Usando archivo SQLite en:', DB_PATH);
-
 
 async function initDb() {
-  db = await open({
-    filename: DB_PATH,
-    driver: sqlite3.Database
-  });
-
+  db = await open({ filename: DB_PATH, driver: sqlite3.Database });
+  await db.exec('PRAGMA journal_mode = WAL;');
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
+      nombre TEXT,
+      apellidos TEXT,
       residencia TEXT,
-      nacimiento TEXT,
+      fecha_nacimiento TEXT,
+      email TEXT UNIQUE,
+      telefono TEXT,
       password_hash TEXT NOT NULL,
-      created_at INTEGER NOT NULL
+      created_at TEXT DEFAULT (datetime('now'))
     );
   `);
 }
+await initDb();
 
-async function getUserSafeById(id) {
-  return db.get('SELECT id, nombre, email, residencia, nacimiento FROM users WHERE id = ?', id);
+// Helpers
+function normalizeUser(row) {
+  if (!row) return null;
+  const { password_hash, ...u } = row;
+  return u;
 }
-function makeToken(user) {
-  return jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-}
-function authRequired(req, res, next) {
-  const auth = req.headers.authorization || '';
-  const [, token] = auth.split(' ');
-  if (!token) return res.status(401).json({ error: 'NO_TOKEN' });
-  try {
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    return res.status(401).json({ error: 'BAD_TOKEN' });
-  }
+function signToken(user) {
+  const payload = { id: user.id, email: user.email, nombre: user.nombre };
+  const secret = process.env.JWT_SECRET || 'dev-secret-change';
+  return jwt.sign(payload, secret, { expiresIn: '30d' });
 }
 
-// -------- Rutas API ----------
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// Healthcheck
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
+// Registro
 app.post('/api/register', async (req, res) => {
   try {
-    const { nombre, email, residencia, nacimiento, password } = req.body || {};
-    if (!nombre || !email || !password) return res.status(400).json({ error: 'MISSING_FIELDS' });
+    const b = req.body || {};
+    const email = (b.email || '').toLowerCase().trim();
+    const password = b.password || '';
 
-    const exists = await db.get('SELECT id FROM users WHERE email = ?', email.toLowerCase());
-    if (exists) return res.status(409).json({ error: 'EMAIL_EXISTS' });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'EMAIL_Y_PASSWORD_REQUERIDOS' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, error: 'PASSWORD_DEMASIADO_CORTA' });
+    }
 
-    const password_hash = await bcrypt.hash(password, 10);
-    const created_at = Date.now();
+    const existing = await db.get('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing) {
+      return res.status(409).json({ success: false, error: 'EMAIL_YA_REGISTRADO' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const data = {
+      nombre: b.nombre || b.name || '',
+      apellidos: b.apellidos || b.surname || b.lastName || '',
+      residencia: b.residencia || b.residence || '',
+      fecha_nacimiento: b.fecha_nacimiento || b.fechaNacimiento || b.birthdate || null,
+      email,
+      telefono: b.telefono || b.phone || null,
+      password_hash
+    };
+
     const result = await db.run(
-      `INSERT INTO users (nombre, email, residencia, nacimiento, password_hash, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      nombre, email.toLowerCase(), residencia || null, nacimiento || null, password_hash, created_at
+      'INSERT INTO users (nombre, apellidos, residencia, fecha_nacimiento, email, telefono, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [data.nombre, data.apellidos, data.residencia, data.fecha_nacimiento, data.email, data.telefono, data.password_hash]
     );
-    const user = await getUserSafeById(result.lastID);
-    const token = makeToken(user);
-    return res.json({ token, user });
-  } catch (e) {
-    console.error('REGISTER_ERROR', e);
-    return res.status(500).json({ error: 'SERVER_ERROR' });
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [result.lastID]);
+    const token = signToken(user);
+
+    res.json({ success: true, message: 'REGISTRO_OK', token, user: normalizeUser(user) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'ERROR_SERVIDOR' });
   }
 });
 
+// Login
 app.post('/api/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: 'MISSING_FIELDS' });
+    const b = req.body || {};
+    const email = (b.email || '').toLowerCase().trim();
+    const password = b.password || '';
 
-    const row = await db.get('SELECT * FROM users WHERE email = ?', email.toLowerCase());
-    if (!row) return res.status(404).json({ error: 'NO_USER' });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'CREDENCIALES_INVALIDAS' });
+    }
 
-    const ok = await bcrypt.compare(password, row.password_hash);
-    if (!ok) return res.status(401).json({ error: 'BAD_PASSWORD' });
+    const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'USUARIO_NO_ENCONTRADO' });
+    }
 
-    const user = await getUserSafeById(row.id);
-    const token = makeToken(user);
-    return res.json({ token, user });
-  } catch (e) {
-    console.error('LOGIN_ERROR', e);
-    return res.status(500).json({ error: 'SERVER_ERROR' });
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'PASSWORD_INCORRECTA' });
+    }
+
+    const token = signToken(user);
+    res.json({ success: true, message: 'LOGIN_OK', token, user: normalizeUser(user) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'ERROR_SERVIDOR' });
   }
 });
 
-app.get('/api/me', authRequired, async (req, res) => {
+// Middleware JWT
+function auth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ success: false, error: 'TOKEN_REQUERIDO' });
   try {
-    const user = await getUserSafeById(req.user.id);
-    if (!user) return res.status(404).json({ error: 'NO_USER' });
-    return res.json({ user });
-  } catch (e) {
-    console.error('ME_ERROR', e);
-    return res.status(500).json({ error: 'SERVER_ERROR' });
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change');
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ success: false, error: 'TOKEN_INVALIDO' });
   }
+}
+
+// Perfil
+app.get('/api/me', auth, async (req, res) => {
+  const user = await db.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
+  if (!user) return res.status(404).json({ success: false, error: 'USUARIO_NO_ENCONTRADO' });
+  res.json({ success: true, user: normalizeUser(user) });
 });
 
-// Fallback para abrir páginas HTML directas
-app.get('*', (req, res, next) => {
-  const file = req.path.replace(/^\//, '');
-  const allowed = [
-    'index.html',
-    'login.html',
-    'registro.html',
-    'panel.html',
-    'grupos.html',
-    'comparador.html',
-    'crear_grupo.html',
-    'grupo_creado.html',
-    'success.html',
-    'welcome_email.html'
-  ];
-
-  if (allowed.includes(file)) {
-    return res.sendFile(path.join(__dirname, file));
-  }
-  return next();
+app.listen(PORT, () => {
+  console.log(`Bricksy backend listening on port ${PORT}`);
 });
-
-app.get('/health', (_req, res) => res.send('ok'));
-
-initDb()
-  .then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Bricksy API escuchando en puerto ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('DB_INIT_ERROR', err);
-    process.exit(1);
-  });
 
 
 
